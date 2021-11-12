@@ -18,10 +18,10 @@ You need to build the kernel first.
 
 ##### Get Source Code
 
-[Kernel Source](https://github.com/oslab-swrc/blk_explore)
+[Kernel Source](https://github.com/oslab-swrc/conf-hpoll)
 
 ```bash
-git clone https://github.com/oslab-swrc/blk_explore && git checkout simulator-log
+git clone https://github.com/oslab-swrc/conf-hpoll && git checkout simulator-log
 ```
 
 

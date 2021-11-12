@@ -8,15 +8,15 @@ from multiprocessing import Pool
 class Simulator:
     def __init__(self, core_list=[0], 
                         log_folder="./scenario1", 
-                        sleep_percentages=[i for i in range(10, 100, 10)],
-                        update_intervals=[1, 10, 100, 1000],
+                        sleep_ratios=[i for i in range(10, 100, 10)],
+                        update_periods=[1, 10, 100, 1000],
                         overslept_threshold=0.05,
                         multi_thread=True):
         self.core_list = core_list
         self.log_folder = log_folder
         self.log_data = []
-        self.sleep_percentages = sleep_percentages
-        self.update_intervals = update_intervals
+        self.sleep_ratios = sleep_ratios
+        self.update_periods = update_periods
         self.overslept_threshold = overslept_threshold
         self.multi_thread = multi_thread
         
@@ -39,8 +39,8 @@ class Simulator:
 
         self.log_data.sort(key=lambda x: x[1])
 
-    def calc_efficiency(self, algorithm, sleep_percentage, update_interval_in_ms):
-        # algorithm == 0 -> mean / algorithm == 1 -> min
+    def calc_efficiency(self, mode, sleep_ratio, update_period_in_ms):
+        # mode == 0 -> mean / mode == 1 -> min
         current_sleep_time_in_ns = 0
         latest_update_time = 0
         
@@ -80,7 +80,7 @@ class Simulator:
 
             # if current sleep time greater than io_time -> io_time is sleep_time
             # mean
-            if algorithm == 0:
+            if mode == 0:
                 io_time_sum += max(io_time, current_sleep_time_in_ns)
                 io_count += 1
             # min
@@ -88,18 +88,18 @@ class Simulator:
                 if max(io_time, current_sleep_time_in_ns) < io_time_min:
                     io_time_min = max(io_time, current_sleep_time_in_ns)
             
-            # update interval check
-            if total_io_time_in_ns - latest_update_time > update_interval_in_ms * 1000000:
+            # update period check
+            if total_io_time_in_ns - latest_update_time > update_period_in_ms * 1000000:
                 # print((total_io_time_in_ns - latest_update_time) / 1000000)
                 # mean
-                if algorithm == 0:
+                if mode == 0:
                     current_sleep_time_in_ns = io_time_sum / io_count
-                    current_sleep_time_in_ns *= sleep_percentage
+                    current_sleep_time_in_ns *= sleep_ratio
                     current_sleep_time_in_ns /= 100
                     current_sleep_time_in_ns = math.ceil(current_sleep_time_in_ns)
                 # min
                 else:
-                    current_sleep_time_in_ns = math.ceil(io_time_min * sleep_percentage / 100)
+                    current_sleep_time_in_ns = math.ceil(io_time_min * sleep_ratio / 100)
                 
                 # update latest_update_time for next update
                 latest_update_time = total_io_time_in_ns
@@ -116,14 +116,7 @@ class Simulator:
         normalized_underslept = round(total_underslept_time / total_trace_time * 100, 2)
         normalized_overslept = round(total_overslept_time / total_trace_time * 100, 2)
 
-        # print(f"Total I/O Time in ms: {io_time_in_ms}")
-        # print(f"Total Polling Time in ms: {polling_time_in_ms}")
-        # print(f"Miss Rate: {miss_rate}%")
-        # print(f"Estimated CPU Usage: {cpu_usage}%")
-        # print(f"Normalized Underslept: {normalized_underslept}%")
-        # print(f"Normalized Overslept: {normalized_overslept}%")
-
-        return {"config": [algorithm, sleep_percentage, update_interval_in_ms],
+        return {"config": [mode, sleep_ratio, update_period_in_ms],
                 "io_time": io_time_in_ms, 
                 "polling_time": polling_time_in_ms, 
                 "miss_rate": miss_rate, 
@@ -134,13 +127,13 @@ class Simulator:
     def run(self):
         self.get_data_from_log()
         test_params = []
-        # algorithm: 0 -> mean, 1 -> min
-        algorithm_list = [0, 1]
-        for algorithm in algorithm_list:
-            for sleep_percentage in self.sleep_percentages:
-                for interval in self.update_intervals:
-                    # print(algorithm, sleep_percentage, interval)
-                    test_params.append((algorithm, sleep_percentage, interval))
+        # mode: 0 -> mean, 1 -> min
+        mode_list = [0, 1]
+        for mode in mode_list:
+            for sleep_ratio in self.sleep_ratios:
+                for period in self.update_periods:
+                    # print(mode, sleep_ratio, period)
+                    test_params.append((mode, sleep_ratio, period))
         
 
         # multi thread
@@ -170,9 +163,9 @@ class Simulator:
 
         if best_config is not None:
             print("Best Config")
-            print(f"Algorithm: {'mean' if best_config[0] == 0 else 'min'}")
+            print(f"Mode: {'mean' if best_config[0] == 0 else 'min'}")
             print(f"Sleep Percentage: {best_config[1]}%")
-            print(f"Update Interval: {best_config[2]}ms")
+            print(f"Update period: {best_config[2]}ms")
             print("\nExtra Information")
             print(f"Estimated I/O Time: {best_result['io_time']}ms")
             print(f"Estimated Polling Time: {best_result['polling_time']}ms")

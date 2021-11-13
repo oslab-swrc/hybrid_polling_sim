@@ -164,6 +164,12 @@ python3 run.py
 
 
 
+#### Example Output
+
+![image](https://user-images.githubusercontent.com/13490996/141603640-51575883-15c9-4da6-8ffd-70921ed6ebaa.png)
+
+
+
 ### Developer Information
 
 #### Requirements
